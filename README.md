@@ -1,38 +1,38 @@
-# Умножител
+# Multiplication Trainer
 
-Приложение за упражнения по умножение и деление. Въведи име на участника, избери операция и число от 1 до 10, след което решавай 10 задачи една по една. Можеш да включиш таймер от 2, 3 или 5 минути или да упражняваш без ограничение във времето. Накрая се показват верните и грешните отговори за всяка задача.
+A practice application for multiplication and division exercises. Enter the participant name, choose an operation and a number from 1 to 10, then solve 10 tasks one by one. You can enable a 2, 3, or 5 minute timer, or practice without any time limit. At the end, the correct and incorrect answers are shown for each task.
 
-## Стартиране с Docker
+## Running with Docker
 
-Необходими са Docker Desktop и Docker Compose.
+Docker Desktop and Docker Compose are required.
 
 ```powershell
 docker compose up --build
 ```
 
-Отвори `http://localhost:8080`. Spring API е достъпно на `http://localhost:8081`, а PostgreSQL данните се пазят в Docker volume `postgres_data`.
+Open `http://localhost:8080`. The Spring API is available at `http://localhost:8081`, and PostgreSQL data is stored in the Docker volume `postgres_data`.
 
-За спиране използвай `Ctrl+C`, а после:
+To stop it, use `Ctrl+C`, then:
 
 ```powershell
 docker compose down
 ```
 
-## Локална разработка
+## Local Development
 
-Необходими са Node.js 22+, Java 21+, Maven и PostgreSQL.
+Node.js 22+, Java 21+, Maven, and PostgreSQL are required.
 
-1. Стартирай PostgreSQL с база `multiplication_db`, потребител `trainer` и парола `trainer`.
-2. В `backend/` изпълни `mvn spring-boot:run`.
-3. В `frontend/` изпълни `npm install`, после `npm start`.
-4. Отвори `http://localhost:4200`. Angular proxy препраща `/api` към `localhost:8080`.
+1. Start PostgreSQL with the database `multiplication_db`, user `trainer`, and password `trainer`.
+2. In `backend/`, run `mvn spring-boot:run`.
+3. In `frontend/`, run `npm install`, then `npm start`.
+4. Open `http://localhost:4200`. The Angular proxy forwards `/api` to `localhost:8080`.
 
-## Тестове
+## Tests
 
-В `frontend/` изпълни `npm test` за Angular API unit тестовете. В `backend/` изпълни `mvn test` за Spring service unit тестовете.
+In `frontend/`, run `npm test` for Angular unit tests. In `backend/`, run `mvn test` for Spring service unit tests.
 
 ## API
 
-- `POST /api/sessions` приема `participantName`, `multiplier`, `operation` (`MULTIPLICATION` или `DIVISION`), `mode` (`TABLE` или `MIXED`) и `timeLimitMinutes` (`null`, `2`, `3` или `5`). Връща сесията и задачите с конкретните операнди.
-- `POST /api/sessions/{id}/submit` приема отговорите за факторите от 1 до 10. Празният отговор се изпраща като `null` и се отчита като грешен.
-- Резултатът съдържа броя верни/грешни и правилния отговор за всяка задача.
+- `POST /api/sessions` accepts `participantName`, `multiplier`, `operation` (`MULTIPLICATION` or `DIVISION`), `mode` (`TABLE` or `MIXED`), and `timeLimitMinutes` (`null`, `2`, `3`, or `5`). It returns the session and the tasks with the specific operands.
+- `POST /api/sessions/{id}/submit` accepts answers for factors from 1 to 10. An empty response is sent as `null` and is counted as incorrect.
+- The result contains the number of correct and incorrect answers and the correct answer for each task.
