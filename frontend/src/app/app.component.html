@@ -1,0 +1,233 @@
+<main class="page-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Начало">
+      <span class="brand-mark" aria-hidden="true">×÷</span>
+      <span class="brand-title">Таблица за умножение</span>
+    </a>
+    @if (session) {
+      <button mat-stroked-button class="back-button" type="button" (click)="reset()">
+        <span aria-hidden="true">←</span> Назад
+      </button>
+    } @else {
+      <span class="topbar-note">Тренировка по математика</span>
+    }
+  </header>
+
+  <section class="workspace" aria-labelledby="page-title">
+    <div class="intro">
+      <div class="eyebrow"><span class="eyebrow-dot"></span> УЧИ СЪС СВОЕТО ТЕМПО</div>
+      <h1 id="page-title">Математика,<br><span>стъпка по стъпка.</span></h1>
+      <p>Избери операция и таблица. Решавай по една задача и виж резултата си накрая.</p>
+      <div class="progress-stamp" aria-hidden="true">
+        <span class="stamp-number">10</span>
+        <span class="stamp-label">задачи<br>във всеки рунд</span>
+      </div>
+    </div>
+
+    <section class="practice-panel" aria-label="Упражнение по математика">
+      @if (state === 'setup' || state === 'loading' || state === 'error') {
+        <div class="panel-heading">
+          <div>
+            <span class="step-label">ПОДГОТОВКА</span>
+            <h2>Настрой упражнението</h2>
+          </div>
+          <span class="round-mark">10 <i>задачи</i></span>
+        </div>
+
+        <form class="setup-form" (ngSubmit)="startPractice()">
+          <mat-form-field appearance="outline" class="wide-field">
+            <mat-label>Име на участника</mat-label>
+            <input
+              matInput
+              name="participantName"
+              [(ngModel)]="participantName"
+              maxlength="80"
+              autocomplete="given-name"
+              required />
+          </mat-form-field>
+
+          <fieldset class="option-block">
+            <legend>Избери операция</legend>
+            <mat-button-toggle-group
+              class="operation-selector"
+              name="operation"
+              aria-label="Избери операция"
+              [(ngModel)]="operation">
+              <mat-button-toggle value="MULTIPLICATION"><span class="toggle-symbol">×</span> Умножение</mat-button-toggle>
+              <mat-button-toggle value="DIVISION"><span class="toggle-symbol">÷</span> Деление</mat-button-toggle>
+            </mat-button-toggle-group>
+          </fieldset>
+
+          <fieldset class="option-block">
+            <legend>Начин на упражнение</legend>
+            <mat-button-toggle-group
+              class="operation-selector"
+              name="mode"
+              aria-label="Избери режим на упражнение"
+              [(ngModel)]="mode">
+              <mat-button-toggle value="TABLE">С едно число</mat-button-toggle>
+              <mat-button-toggle value="MIXED">С различни числа</mat-button-toggle>
+            </mat-button-toggle-group>
+          </fieldset>
+
+          @if (mode === 'TABLE') {
+            <fieldset class="option-block">
+              <legend>{{ operation === 'MULTIPLICATION' ? 'Избери таблица' : 'Избери делител' }}</legend>
+              <mat-button-toggle-group
+                class="number-selector"
+                name="multiplier"
+                aria-label="Избери число от 1 до 10"
+                [(ngModel)]="selectedMultiplier">
+                @for (multiplier of multipliers; track multiplier) {
+                  <mat-button-toggle [value]="multiplier">{{ multiplier }}</mat-button-toggle>
+                }
+              </mat-button-toggle-group>
+            </fieldset>
+          } @else {
+            <p class="mixed-note">Само {{ operation === 'MULTIPLICATION' ? 'умножение' : 'деление' }}, с различни числа от 1 до 10.</p>
+          }
+
+          <div class="timer-options">
+            <div class="timer-toggle-copy">
+              <span class="timer-title">Ограничено време</span>
+              <span class="timer-caption">По желание, с обратно броене</span>
+            </div>
+            <mat-slide-toggle [(ngModel)]="timerEnabled" name="timerEnabled" aria-label="Включи таймер"></mat-slide-toggle>
+          </div>
+
+          @if (timerEnabled) {
+            <fieldset class="option-block duration-block">
+              <legend>Време за решаване</legend>
+              <mat-button-toggle-group
+                class="duration-selector"
+                name="duration"
+                aria-label="Избери времетраене"
+                [(ngModel)]="selectedDuration">
+                @for (duration of timeOptions; track duration) {
+                  <mat-button-toggle [value]="duration">{{ duration }} мин</mat-button-toggle>
+                }
+              </mat-button-toggle-group>
+            </fieldset>
+          }
+
+          @if (errorMessage) {
+            <p class="error-message" role="alert">{{ errorMessage }}</p>
+          }
+
+          <button mat-flat-button class="start-button" type="submit" [disabled]="!canStart">
+            {{ state === 'loading' ? 'Подготвяме задачите…' : 'Започни упражнението' }}
+            <span aria-hidden="true">→</span>
+          </button>
+          <p class="panel-footnote">10 задачи · {{ timerEnabled ? selectedDuration + ' минути' : 'без ограничение във времето' }}</p>
+        </form>
+      }
+
+      @if (session; as activeSession) {
+        @if (state === 'practice') {
+          <div class="exercise-top">
+            <div>
+              <span class="step-label">УЧАСТНИК · {{ activeSession.participantName }}</span>
+              <h2>{{ activeSession.operation === 'MULTIPLICATION' ? 'Умножение' : 'Деление' }} · {{ activeSession.mode === 'MIXED' ? 'Микс' : activeSession.multiplier }}</h2>
+            </div>
+            @if (activeSession.timeLimitMinutes !== null) {
+              <div class="timer-readout" [class.timer-urgent]="timerUrgent" role="timer" aria-live="off">
+                <span class="clock-face" aria-hidden="true"></span>
+                <span class="timer-copy">
+                  <span>ОСТАВАЩО ВРЕМЕ</span>
+                  <strong>{{ timerLabel }}</strong>
+                </span>
+              </div>
+            }
+          </div>
+
+          @if (activeSession.timeLimitMinutes !== null) {
+            <mat-progress-bar class="timer-progress" mode="determinate" [value]="timerProgress" aria-label="Оставащо време"></mat-progress-bar>
+          }
+
+          <div class="question-progress">
+            <span>Задача {{ currentIndex + 1 }} от {{ questionCount }}</span>
+            <mat-progress-bar mode="determinate" [value]="((currentIndex + 1) / questionCount) * 100" aria-label="Напредък"></mat-progress-bar>
+          </div>
+
+          @for (question of activeSession.questions; track question.factor) {
+            @if ($index === currentIndex) {
+              <div class="question-stage">
+                <span class="operation-mark" aria-hidden="true">{{ activeSession.operation === 'MULTIPLICATION' ? '×' : '÷' }}</span>
+                <p class="question-prompt">{{ questionText(question.factor) }}</p>
+                <form class="answer-form" (ngSubmit)="advanceQuestion()">
+                  <mat-form-field appearance="outline" class="answer-field">
+                    <mat-label>Твоят отговор</mat-label>
+                    <input
+                      matInput
+                      name="answer"
+                      type="number"
+                      inputmode="numeric"
+                      min="0"
+                      step="1"
+                      autocomplete="off"
+                      [(ngModel)]="currentAnswer"
+                      required />
+                  </mat-form-field>
+                  <button mat-flat-button type="submit" [disabled]="!canSubmitCurrent">
+                    {{ currentIndex === questionCount - 1 ? 'Към резултата' : 'Следваща задача' }}
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </form>
+                <p class="panel-footnote">Натисни Enter или бутона, за да продължиш.</p>
+              </div>
+            }
+          }
+        }
+
+        @if (state === 'submitting') {
+          <div class="loading-state" role="status">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <p>Проверяваме отговорите…</p>
+          </div>
+        }
+
+        @if (state === 'results' && result) {
+          <div class="panel-heading result-heading">
+            <div>
+              <span class="step-label">РЕЗУЛТАТ · {{ activeSession.participantName }}</span>
+              <h2>{{ result.correctCount === 0 ? 'Опитай отново!' : result.correctCount === questionCount ? 'Отличен резултат!' : result.correctCount > 7 ? 'Добра работа!' : 'Продължавай да тренираш!' }}</h2>
+            </div>
+            <button mat-stroked-button type="button" (click)="reset()">Ново упражнение</button>
+          </div>
+
+          @if (timedOut) {
+            <p class="timeout-message" role="status">Времето изтече. Непопълнените задачи са отбелязани като грешни.</p>
+          }
+
+          <div class="score-line">
+            <div class="score score-correct"><strong>{{ result.correctCount }}</strong><span>верни</span></div>
+            <span class="score-divider"></span>
+            <div class="score score-incorrect"><strong>{{ result.incorrectCount }}</strong><span>грешни</span></div>
+            <div class="score-total"><span>ОБЩО</span><strong>{{ questionCount }}</strong></div>
+          </div>
+
+          <div class="answer-review" aria-label="Проверка на отговорите">
+            @for (answer of result.details; track answer.factor) {
+              <div class="review-row" [class.is-correct]="answer.correct" [class.is-incorrect]="!answer.correct">
+                <span class="review-equation">{{ questionText(answer.factor) }}</span>
+                <span class="review-response">{{ answer.submitted ?? '—' }}</span>
+                <span class="review-status">
+                  {{ answer.correct ? 'Вярно' : answer.submitted === null ? 'Без отговор · вярно: ' + answer.expected : 'Грешно · вярно: ' + answer.expected }}
+                </span>
+                <span class="review-mark" aria-hidden="true">{{ answer.correct ? '✓' : '×' }}</span>
+              </div>
+            }
+          </div>
+
+          <button mat-flat-button class="start-button" type="button" (click)="reset()">Ново упражнение <span aria-hidden="true">→</span></button>
+        }
+      }
+    </section>
+  </section>
+
+  <footer class="page-footer">
+    <span>ЕДНА ЗАДАЧА СЛЕД ДРУГА</span>
+    <span class="footer-rule"></span>
+    <span>УМНОЖЕНИЕ · ДЕЛЕНИЕ</span>
+  </footer>
+</main>

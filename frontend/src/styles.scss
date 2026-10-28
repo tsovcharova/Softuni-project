@@ -1,0 +1,45 @@
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light;
+  @include mat.theme((
+    color: (
+      primary: mat.$blue-palette,
+      tertiary: mat.$orange-palette,
+    ),
+    typography: 'Trebuchet MS',
+    density: 0,
+  ));
+}
+
+:root {
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #243747;
+  --muted: #647987;
+  --aqua: #16849a;
+  --lime: #ffd95f;
+  --coral: #f47c62;
+  --blue: #4779c8;
+  --pink: #e97c9a;
+  --line: #d6e4e7;
+  --paper: #fffefa;
+  --mono: 'Cascadia Code', Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  background-color: #edf7fb;
+  background-image: radial-gradient(#cbdfe7 0.8px, transparent 0.8px);
+  background-size: 20px 20px;
+}
+
+button, input { font: inherit; }
+button { color: inherit; }
+::selection { color: var(--ink); background: var(--lime); }
